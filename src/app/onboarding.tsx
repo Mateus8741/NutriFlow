@@ -99,12 +99,50 @@ export default function OnboardingScreen() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const scrollX = useRef(new Animated.Value(0)).current;
   const slidesRef = useRef<FlatList<Slide>>(null);
+  const textOpacity = useRef(new Animated.Value(1)).current;
+  const buttonWidth = useRef(new Animated.Value(140)).current;
+  const buttonTextOpacity = useRef(new Animated.Value(1)).current;
 
   const viewableItemsChanged = useRef(
     ({ viewableItems }: { viewableItems: ViewToken<Slide>[] }) => {
       const index = viewableItems[0]?.index;
       if (typeof index === 'number') {
-        setCurrentIndex(index);
+        // Fade out atual texto
+        Animated.timing(textOpacity, {
+          toValue: 0,
+          duration: 200,
+          useNativeDriver: true,
+        }).start(() => {
+          setCurrentIndex(index);
+          // Fade in novo texto
+          Animated.timing(textOpacity, {
+            toValue: 1,
+            duration: 200,
+            useNativeDriver: true,
+          }).start();
+
+          // Hide button text
+          Animated.timing(buttonTextOpacity, {
+            toValue: 0,
+            duration: 0,
+            useNativeDriver: true,
+          }).start();
+
+          // Animar a largura do botão
+          Animated.spring(buttonWidth, {
+            toValue: index === slides.length - 1 ? 180 : 140,
+            friction: 8,
+            tension: 40,
+            useNativeDriver: false,
+          }).start(() => {
+            // Show button text after width animation
+            Animated.timing(buttonTextOpacity, {
+              toValue: 1,
+              duration: 200,
+              useNativeDriver: true,
+            }).start();
+          });
+        });
       }
     }
   ).current;
@@ -203,12 +241,8 @@ export default function OnboardingScreen() {
       </View>
       <View className="h-24 items-center justify-center px-4">
         <View className="mb-4 flex-row">
-          {slides.map((slide: Slide) => {
-            const inputRange = [
-              (Number.parseInt(slide.id) - 1) * width,
-              Number.parseInt(slide.id) * width,
-              (Number.parseInt(slide.id) + 1) * width,
-            ];
+          {slides.map((_, index) => {
+            const inputRange = [(index - 1) * width, index * width, (index + 1) * width];
             const dotWidth = scrollX.interpolate({
               inputRange,
               outputRange: [10, 20, 10],
@@ -221,7 +255,7 @@ export default function OnboardingScreen() {
             });
             return (
               <Animated.View
-                key={`dot-${slide.id}`}
+                key={`dot-${index.toString()}`}
                 style={{
                   width: dotWidth,
                   height: 10,
@@ -234,14 +268,20 @@ export default function OnboardingScreen() {
             );
           })}
         </View>
-        <TouchableOpacity
-          className="flex-row items-center rounded-full bg-green-500 px-8 py-4"
-          onPress={scrollTo}>
-          <Text className="mr-2 text-center text-lg font-semibold text-white">
-            {currentIndex === slides.length - 1 ? 'Começar agora' : 'Próximo'}
-          </Text>
-          <Feather name="arrow-right" size={16} color="white" />
-        </TouchableOpacity>
+        <View className="items-center">
+          <Animated.View style={{ width: buttonWidth }}>
+            <TouchableOpacity
+              className="flex-row items-center justify-center rounded-full bg-green-500 py-4"
+              onPress={() => {
+                scrollTo();
+              }}>
+              <Text className="mr-2 text-center text-lg font-semibold text-white">
+                {currentIndex === slides.length - 1 ? 'Começar agora' : 'Próximo'}
+              </Text>
+              <Feather name="arrow-right" size={16} color="white" />
+            </TouchableOpacity>
+          </Animated.View>
+        </View>
       </View>
     </View>
   );

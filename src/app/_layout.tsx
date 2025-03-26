@@ -17,7 +17,7 @@ export {
 
 export const unstable_settings = {
   // Ensure that reloading on `/modal` keeps a back button present.
-  initialRouteName: 'index',
+  initialRouteName: 'onboarding',
 };
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
@@ -64,6 +64,7 @@ export default function RootLayout() {
               title: 'Dietify Flow',
             }}
           />
+          <Stack.Screen name="onboarding" options={{ headerShown: false }} />
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
         </Stack>
